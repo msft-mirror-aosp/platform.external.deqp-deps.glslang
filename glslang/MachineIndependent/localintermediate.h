@@ -2,6 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2016 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
+//
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -253,6 +255,7 @@ public:
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
         binaryDoubleOutput(false),
+        usePhysicalStorageBuffer(false),
         uniformLocationBase(0)
     {
         localSize[0] = 1;
@@ -388,6 +391,11 @@ public:
         processes.addProcess("use-vulkan-memory-model");
     }
     bool usingVulkanMemoryModel() const { return useVulkanMemoryModel; }
+    void setUsePhysicalStorageBuffer()
+    {
+        usePhysicalStorageBuffer = true;
+    }
+    bool usingPhysicalStorageBuffer() const { return usePhysicalStorageBuffer; }
 
     template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
     bool hasCounterBufferName(const TString& name) const {
@@ -664,8 +672,10 @@ public:
 
     void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     const std::string& getSourceFile() const { return sourceFile; }
-    void addSourceText(const char* text) { sourceText = sourceText + text; }
+    void addSourceText(const char* text, size_t len) { sourceText.append(text, len); }
     const std::string& getSourceText() const { return sourceText; }
+    const std::map<std::string, std::string>& getIncludeText() const { return includeText; }
+    void addIncludeText(const char* name, const char* text, size_t len) { includeText[name].assign(text,len); }
     void addProcesses(const std::vector<std::string>& p)
     {
         for (int i = 0; i < (int)p.size(); ++i)
@@ -813,11 +823,15 @@ protected:
     std::string sourceFile;
     std::string sourceText;
 
+    // Included text. First string is a name, second is the included text
+    std::map<std::string, std::string> includeText;
+
     // for OpModuleProcessed, or equivalent
     TProcesses processes;
 
     bool needToLegalize;
     bool binaryDoubleOutput;
+    bool usePhysicalStorageBuffer;
 
     std::unordered_map<std::string, int> uniformLocationOverrides;
     int uniformLocationBase;
