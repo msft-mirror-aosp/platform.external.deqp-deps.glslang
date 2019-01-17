@@ -1,7 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2015 LunarG, Inc.
-// Copyright (C) 2015-2016 Google, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 // Copyright (C) 2017 ARM Limited.
 //
 // All rights reserved.
@@ -983,6 +983,14 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
 
     case EOpSequence:
     case EOpConstructStruct:
+
+        if (type.getBasicType() == EbtReference || node->getType().getBasicType() == EbtReference) {
+            // types must match to assign a reference
+            if (type == node->getType())
+                return node;
+            else
+                return nullptr;
+        }
 
         if (type.getBasicType() == node->getType().getBasicType())
             return node;
@@ -2130,6 +2138,9 @@ TOperator TIntermediate::mapTypeToConstructorOp(const TType& type) const
             default: break; // some compilers want this
             }
         }
+        break;
+    case EbtReference:
+        op = EOpConstructReference;
         break;
     default:
         break;

@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
 //
 // All rights reserved.
 //
@@ -260,6 +261,7 @@ void TIntermediate::mergeModes(TInfoSink& infoSink, TIntermediate& unit)
 
     MERGE_TRUE(needToLegalize);
     MERGE_TRUE(binaryDoubleOutput);
+    MERGE_TRUE(usePhysicalStorageBuffer);
 }
 
 //
@@ -1354,6 +1356,7 @@ int TIntermediate::getBaseAlignmentScalar(const TType& type, int& size)
     case EbtUint8:   size = 1; return 1;
     case EbtInt16:
     case EbtUint16:  size = 2; return 2;
+    case EbtReference: size = 8; return 8;
     default:         size = 4; return 4;
     }
 }

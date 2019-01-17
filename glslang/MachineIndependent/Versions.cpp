@@ -2,6 +2,7 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2012-2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
 //
 // All rights reserved.
 //
@@ -206,6 +207,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_samplerless_texture_functions]           = EBhDisable;
     extensionBehavior[E_GL_EXT_scalar_block_layout]                     = EBhDisable;
     extensionBehavior[E_GL_EXT_fragment_invocation_density]             = EBhDisable;
+    extensionBehavior[E_GL_EXT_buffer_reference]                        = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_16bit_storage]                    = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_8bit_storage]                     = EBhDisable;
@@ -382,6 +384,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_samplerless_texture_functions 1\n"
             "#define GL_EXT_scalar_block_layout 1\n"
             "#define GL_EXT_fragment_invocation_density 1\n"
+            "#define GL_EXT_buffer_reference 1\n"
 
             // GL_KHR_shader_subgroup
             "#define GL_KHR_shader_subgroup_basic 1\n"
