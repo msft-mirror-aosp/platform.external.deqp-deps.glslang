@@ -191,6 +191,13 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeDerivativeGroupLinearNV:  return "DerivativeGroupLinearNV";
 #endif
 
+    case ExecutionModePixelInterlockOrderedEXT:         return "PixelInterlockOrderedEXT";
+    case ExecutionModePixelInterlockUnorderedEXT:       return "PixelInterlockUnorderedEXT";
+    case ExecutionModeSampleInterlockOrderedEXT:        return "SampleInterlockOrderedEXT";
+    case ExecutionModeSampleInterlockUnorderedEXT:      return "SampleInterlockUnorderedEXT";
+    case ExecutionModeShadingRateInterlockOrderedEXT:   return "ShadingRateInterlockOrderedEXT";
+    case ExecutionModeShadingRateInterlockUnorderedEXT: return "ShadingRateInterlockUnorderedEXT";
+
     case ExecutionModeCeiling:
     default: return "Bad";
     }
@@ -416,6 +423,10 @@ const char* BuiltInString(int builtIn)
     case BuiltInMeshViewCountNV:       return "MeshViewCountNV";
     case BuiltInMeshViewIndicesNV:     return "MeshViewIndicesNV";
 #endif
+    case BuiltInWarpsPerSMNV:           return "WarpsPerSMNV";
+    case BuiltInSMCountNV:              return "SMCountNV";
+    case BuiltInWarpIDNV:               return "WarpIDNV";
+    case BuiltInSMIDNV:                 return "SMIDNV";
 
     default: return "Bad";
     }
@@ -941,6 +952,13 @@ const char* CapabilityString(int info)
     case CapabilityVariablePointers:                    return "VariablePointers";
 
     case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
+    case CapabilityShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
+
+    case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
+    case CapabilityFragmentShaderPixelInterlockEXT:         return "CapabilityFragmentShaderPixelInterlockEXT";
+    case CapabilityFragmentShaderShadingRateInterlockEXT:   return "CapabilityFragmentShaderShadingRateInterlockEXT";
+
+    case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
 
     default: return "Bad";
     }
@@ -1351,6 +1369,11 @@ const char* OpcodeString(int op)
     case OpCooperativeMatrixStoreNV:        return "OpCooperativeMatrixStoreNV";
     case OpCooperativeMatrixMulAddNV:       return "OpCooperativeMatrixMulAddNV";
     case OpCooperativeMatrixLengthNV:       return "OpCooperativeMatrixLengthNV";
+    case OpDemoteToHelperInvocationEXT:     return "OpDemoteToHelperInvocationEXT";
+    case OpIsHelperInvocationEXT:           return "OpIsHelperInvocationEXT";
+
+    case OpBeginInvocationInterlockEXT:     return "OpBeginInvocationInterlockEXT";
+    case OpEndInvocationInterlockEXT:       return "OpEndInvocationInterlockEXT";
 
     default:
         return "Bad";
@@ -1465,6 +1488,8 @@ void Parameterize()
     InstructionDesc[OpModuleProcessed].setResultAndType(false, false);
     InstructionDesc[OpTypeCooperativeMatrixNV].setResultAndType(true, false);
     InstructionDesc[OpCooperativeMatrixStoreNV].setResultAndType(false, false);
+    InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
+    InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
 
     // Specific additional context-dependent operands
 
@@ -2763,6 +2788,8 @@ void Parameterize()
     InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'C'");
 
     InstructionDesc[OpCooperativeMatrixLengthNV].operands.push(OperandId, "'Type'");
+
+    InstructionDesc[OpDemoteToHelperInvocationEXT].setResultAndType(false, false);
 }
 
 }; // end spv namespace

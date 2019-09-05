@@ -5030,6 +5030,14 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "\n");
     }
 
+    stageBuiltins[EShLangFragment].append(
+        "void beginInvocationInterlockARB(void);"
+        "void endInvocationInterlockARB(void);");
+
+    stageBuiltins[EShLangFragment].append(
+        "bool helperInvocationEXT();"
+        "\n");
+
 #ifdef AMD_EXTENSIONS
     // GL_AMD_shader_explicit_vertex_parameter
     if (profile != EEsProfile && version >= 450) {
@@ -6137,6 +6145,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "in highp   uvec4 gl_SubgroupGtMask;"
             "in highp   uvec4 gl_SubgroupLeMask;"
             "in highp   uvec4 gl_SubgroupLtMask;"
+            // GL_NV_shader_sm_builtins
+            "in highp   uint  gl_WarpsPerSMNV;"
+            "in highp   uint  gl_SMCountNV;"
+            "in highp   uint  gl_WarpIDNV;"
+            "in highp   uint  gl_SMIDNV;"
             "\n";
         const char* fragmentSubgroupDecls =
             "flat in mediump uint  gl_SubgroupSize;"
@@ -6146,6 +6159,11 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
             "flat in highp   uvec4 gl_SubgroupGtMask;"
             "flat in highp   uvec4 gl_SubgroupLeMask;"
             "flat in highp   uvec4 gl_SubgroupLtMask;"
+            // GL_NV_shader_sm_builtins
+            "flat in highp   uint  gl_WarpsPerSMNV;"
+            "flat in highp   uint  gl_SMCountNV;"
+            "flat in highp   uint  gl_WarpIDNV;"
+            "flat in highp   uint  gl_SMIDNV;"
             "\n";
         const char* computeSubgroupDecls =
             "in highp   uint  gl_NumSubgroups;"
@@ -6295,6 +6313,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
         commonBuiltins.append("const int gl_SemanticsAcquireRelease  = 0x8;\n");
         commonBuiltins.append("const int gl_SemanticsMakeAvailable   = 0x2000;\n");
         commonBuiltins.append("const int gl_SemanticsMakeVisible     = 0x4000;\n");
+        commonBuiltins.append("const int gl_SemanticsVolatile        = 0x8000;\n");
 
         commonBuiltins.append("const int gl_StorageSemanticsNone     = 0x0;\n");
         commonBuiltins.append("const int gl_StorageSemanticsBuffer   = 0x40;\n");
@@ -7885,19 +7904,6 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("readInvocationARB",      1, &E_GL_ARB_shader_ballot);
             symbolTable.setFunctionExtensions("readFirstInvocationARB", 1, &E_GL_ARB_shader_ballot);
 
-            BuiltInVariable("gl_SubGroupInvocationARB", EbvSubGroupInvocation, symbolTable);
-            BuiltInVariable("gl_SubGroupEqMaskARB",     EbvSubGroupEqMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupGeMaskARB",     EbvSubGroupGeMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupGtMaskARB",     EbvSubGroupGtMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupLeMaskARB",     EbvSubGroupLeMask,     symbolTable);
-            BuiltInVariable("gl_SubGroupLtMaskARB",     EbvSubGroupLtMask,     symbolTable);
-
-            if (spvVersion.vulkan > 0)
-                // Treat "gl_SubGroupSizeARB" as shader input instead of uniform for Vulkan
-                SpecialQualifier("gl_SubGroupSizeARB", EvqVaryingIn, EbvSubGroupSize, symbolTable);
-            else
-                BuiltInVariable("gl_SubGroupSizeARB", EbvSubGroupSize, symbolTable);
-
             if (version >= 430) {
                 symbolTable.setFunctionExtensions("anyInvocationARB",       1, &E_GL_ARB_shader_group_vote);
                 symbolTable.setFunctionExtensions("allInvocationsARB",      1, &E_GL_ARB_shader_group_vote);
@@ -8158,7 +8164,22 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_ViewIndex", 1, &E_GL_EXT_multiview);
             BuiltInVariable("gl_ViewIndex", EbvViewIndex, symbolTable);
         }
-        
+
+	if (profile != EEsProfile) {
+            BuiltInVariable("gl_SubGroupInvocationARB", EbvSubGroupInvocation, symbolTable);
+            BuiltInVariable("gl_SubGroupEqMaskARB",     EbvSubGroupEqMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupGeMaskARB",     EbvSubGroupGeMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupGtMaskARB",     EbvSubGroupGtMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupLeMaskARB",     EbvSubGroupLeMask,     symbolTable);
+            BuiltInVariable("gl_SubGroupLtMaskARB",     EbvSubGroupLtMask,     symbolTable);
+
+            if (spvVersion.vulkan > 0)
+                // Treat "gl_SubGroupSizeARB" as shader input instead of uniform for Vulkan
+                SpecialQualifier("gl_SubGroupSizeARB", EvqVaryingIn, EbvSubGroupSize, symbolTable);
+            else
+                BuiltInVariable("gl_SubGroupSizeARB", EbvSubGroupSize, symbolTable);
+        }
+
         // GL_KHR_shader_subgroup
         if ((profile == EEsProfile && version >= 310) ||
             (profile != EEsProfile && version >= 140)) {
@@ -8177,6 +8198,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         break;
@@ -8578,6 +8609,15 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setFunctionExtensions("subgroupPartitionedExclusiveXorNV",            1, &E_GL_NV_shader_subgroup_partitioned);
 #endif
 
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         if (profile == EEsProfile) {
@@ -8597,6 +8637,7 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_SemanticsAcquireRelease", 1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_SemanticsMakeAvailable",  1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_SemanticsMakeVisible",    1, &E_GL_KHR_memory_scope_semantics);
+            symbolTable.setVariableExtensions("gl_SemanticsVolatile",       1, &E_GL_KHR_memory_scope_semantics);
 
             symbolTable.setVariableExtensions("gl_StorageSemanticsNone",    1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_StorageSemanticsBuffer",  1, &E_GL_KHR_memory_scope_semantics);
@@ -8604,6 +8645,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             symbolTable.setVariableExtensions("gl_StorageSemanticsImage",   1, &E_GL_KHR_memory_scope_semantics);
             symbolTable.setVariableExtensions("gl_StorageSemanticsOutput",  1, &E_GL_KHR_memory_scope_semantics);
         }
+
+        symbolTable.setFunctionExtensions("helperInvocationEXT",            1, &E_GL_EXT_demote_to_helper_invocation);
         break;
 
     case EShLangCompute:
@@ -8682,6 +8725,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
 
         if ((profile != EEsProfile && version >= 140) ||
@@ -8796,6 +8849,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupGtMask",       EbvSubgroupGtMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLeMask",       EbvSubgroupLeMask2,     symbolTable);
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 
@@ -8930,6 +8993,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
 
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 
@@ -9020,6 +9093,16 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_SubgroupLtMask",       EbvSubgroupLtMask2,     symbolTable);
 
             symbolTable.setFunctionExtensions("subgroupMemoryBarrierShared", 1, &E_GL_KHR_shader_subgroup_basic);
+
+            // GL_NV_shader_sm_builtins
+            symbolTable.setVariableExtensions("gl_WarpsPerSMNV",         1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMCountNV",            1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_WarpIDNV",             1, &E_GL_NV_shader_sm_builtins);
+            symbolTable.setVariableExtensions("gl_SMIDNV",               1, &E_GL_NV_shader_sm_builtins);
+            BuiltInVariable("gl_WarpsPerSMNV",          EbvWarpsPerSM,      symbolTable);
+            BuiltInVariable("gl_SMCountNV",             EbvSMCount,         symbolTable);
+            BuiltInVariable("gl_WarpIDNV",              EbvWarpID,          symbolTable);
+            BuiltInVariable("gl_SMIDNV",                EbvSMID,            symbolTable);
         }
         break;
 #endif
@@ -9217,6 +9300,8 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
     symbolTable.relateToOperator("bitCount",          EOpBitCount);
     symbolTable.relateToOperator("findLSB",           EOpFindLSB);
     symbolTable.relateToOperator("findMSB",           EOpFindMSB);
+
+    symbolTable.relateToOperator("helperInvocationEXT",  EOpIsHelperInvocation);
 
     if (PureOperatorBuiltins) {
         symbolTable.relateToOperator("imageSize",               EOpImageQuerySize);
@@ -9539,6 +9624,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
         if (profile != EEsProfile)
             symbolTable.relateToOperator("interpolateAtVertexAMD", EOpInterpolateAtVertex);
 #endif
+
+        symbolTable.relateToOperator("beginInvocationInterlockARB", EOpBeginInvocationInterlock);
+        symbolTable.relateToOperator("endInvocationInterlockARB",   EOpEndInvocationInterlock);
+
         break;
 
     case EShLangCompute:
