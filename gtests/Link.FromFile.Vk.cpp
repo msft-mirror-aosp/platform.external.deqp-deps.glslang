@@ -75,11 +75,6 @@ TEST_P(LinkTestVulkan, FromFile)
     result.linkingOutput = program.getInfoLog();
     result.linkingError = program.getInfoDebugLog();
 
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
-        if (success)
-            program.mapIO();
-#endif
-
     if (success && (controls & EShMsgSpvRules)) {
         spv::SpvBuildLogger logger;
         std::vector<uint32_t> spirv_binary;
@@ -109,7 +104,7 @@ TEST_P(LinkTestVulkan, FromFile)
 }
 
 // clang-format off
-INSTANTIATE_TEST_SUITE_P(
+INSTANTIATE_TEST_CASE_P(
     Glsl, LinkTestVulkan,
     ::testing::ValuesIn(std::vector<std::vector<std::string>>({
         {"link1.vk.frag", "link2.vk.frag"},

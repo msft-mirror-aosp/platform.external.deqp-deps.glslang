@@ -127,6 +127,22 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
 {
     TIntermBinary* binaryNode = node->getAsBinaryNode();
 
+    if (binaryNode) {
+        switch(binaryNode->getOp()) {
+        case EOpIndexDirect:
+        case EOpIndexIndirect:     // fall through
+        case EOpIndexDirectStruct: // fall through
+        case EOpVectorSwizzle:
+        case EOpMatrixSwizzle:
+            return lValueErrorCheck(loc, op, binaryNode->getLeft());
+        default:
+            break;
+        }
+        error(loc, " l-value required", op, "", "");
+
+        return true;
+    }
+
     const char* symbol = nullptr;
     TIntermSymbol* symNode = node->getAsSymbolNode();
     if (symNode != nullptr)
@@ -187,40 +203,15 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
     // Everything else is okay, no error.
     //
     if (message == nullptr)
-    {
-        if (binaryNode) {
-            switch (binaryNode->getOp()) {
-            case EOpIndexDirect:
-            case EOpIndexIndirect:     // fall through
-            case EOpIndexDirectStruct: // fall through
-            case EOpVectorSwizzle:
-            case EOpMatrixSwizzle:
-                return lValueErrorCheck(loc, op, binaryNode->getLeft());
-            default:
-                break;
-            }
-            error(loc, " l-value required", op, "", "");
-
-            return true;
-        }
         return false;
-    }
 
     //
     // If we get here, we have an error and a message.
     //
-    const TIntermTyped* leftMostTypeNode = TIntermediate::findLValueBase(node, true);
-
     if (symNode)
         error(loc, " l-value required", op, "\"%s\" (%s)", symbol, message);
     else
-        if (binaryNode && binaryNode->getAsOperator()->getOp() == EOpIndexDirectStruct)
-            if(IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName()))
-                error(loc, " l-value required", op, "\"%s\" (%s)", leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str(), message);
-            else
-                error(loc, " l-value required", op, "\"%s\" (%s)", leftMostTypeNode->getAsSymbolNode()->getName().c_str(), message);
-        else
-            error(loc, " l-value required", op, "(%s)", message);
+        error(loc, " l-value required", op, "(%s)", message);
 
     return true;
 }
@@ -228,41 +219,28 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
 // Test for and give an error if the node can't be read from.
 void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, TIntermTyped* node)
 {
-    TIntermBinary* binaryNode = node->getAsBinaryNode();
-    const TIntermSymbol* symNode = node->getAsSymbolNode();
-
     if (! node)
         return;
 
-    if (node->getQualifier().isWriteOnly()) {
-        const TIntermTyped* leftMostTypeNode = TIntermediate::findLValueBase(node, true);
-
-        if (symNode != nullptr)
-            error(loc, "can't read from writeonly object: ", op, symNode->getName().c_str());
-        else if (binaryNode &&
-                (binaryNode->getAsOperator()->getOp() == EOpIndexDirectStruct ||
-                 binaryNode->getAsOperator()->getOp() == EOpIndexDirect))
-            if(IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName()))
-                error(loc, "can't read from writeonly object: ", op, leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str());
-            else
-                error(loc, "can't read from writeonly object: ", op, leftMostTypeNode->getAsSymbolNode()->getName().c_str());
-        else
-            error(loc, "can't read from writeonly object: ", op, "");
-
-    } else {
-        if (binaryNode) {
-            switch (binaryNode->getOp()) {
-            case EOpIndexDirect:
-            case EOpIndexIndirect:
-            case EOpIndexDirectStruct:
-            case EOpVectorSwizzle:
-            case EOpMatrixSwizzle:
-                rValueErrorCheck(loc, op, binaryNode->getLeft());
-            default:
-                break;
-            }
+    TIntermBinary* binaryNode = node->getAsBinaryNode();
+    if (binaryNode) {
+        switch(binaryNode->getOp()) {
+        case EOpIndexDirect:
+        case EOpIndexIndirect:
+        case EOpIndexDirectStruct:
+        case EOpVectorSwizzle:
+        case EOpMatrixSwizzle:
+            rValueErrorCheck(loc, op, binaryNode->getLeft());
+        default:
+            break;
         }
+
+        return;
     }
+
+    TIntermSymbol* symNode = node->getAsSymbolNode();
+    if (symNode && symNode->getQualifier().isWriteOnly())
+        error(loc, "can't read from writeonly object: ", op, symNode->getName().c_str());
 }
 
 // Add 'symbol' to the list of deferred linkage symbols, which

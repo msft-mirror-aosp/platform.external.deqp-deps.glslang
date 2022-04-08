@@ -85,8 +85,6 @@ void TType::buildMangledName(TString& mangledName) const
 #endif
         case EbtInt:   mangledName += "i"; break;
         case EbtUint:  mangledName += "u"; break;
-        case EbtInt64:   mangledName += "i64"; break;
-        case EbtUint64:  mangledName += "u64"; break;
         default: break; // some compilers want this
         }
         if (sampler.isImageClass())
@@ -148,8 +146,6 @@ void TType::buildMangledName(TString& mangledName) const
         if (typeName)
             mangledName += *typeName;
         for (unsigned int i = 0; i < structure->size(); ++i) {
-            if ((*structure)[i].type->getBasicType() == EbtVoid)
-                continue;
             mangledName += '-';
             (*structure)[i].type->buildMangledName(mangledName);
         }
@@ -182,7 +178,7 @@ void TType::buildMangledName(TString& mangledName) const
     }
 }
 
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
 
 //
 // Dump functions.

@@ -117,7 +117,7 @@ public:
     virtual int getNumExtensions() const { return extensions == nullptr ? 0 : (int)extensions->size(); }
     virtual const char** getExtensions() const { return extensions->data(); }
 
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     virtual void dump(TInfoSink& infoSink, bool complete = false) const = 0;
     void dumpExtensions(TInfoSink& infoSink) const;
 #endif
@@ -196,7 +196,7 @@ public:
     }
     virtual const char** getMemberExtensions(int member) const { return (*memberExtensions)[member].data(); }
 
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     virtual void dump(TInfoSink& infoSink, bool complete = false) const;
 #endif
 
@@ -319,7 +319,7 @@ public:
     virtual TParameter& operator[](int i) { assert(writable); return parameters[i]; }
     virtual const TParameter& operator[](int i) const { return parameters[i]; }
 
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     virtual void dump(TInfoSink& infoSink, bool complete = false) const override;
 #endif
 
@@ -381,7 +381,7 @@ public:
     virtual const char** getExtensions() const override { return anonContainer.getMemberExtensions(memberNumber); }
 
     virtual int getAnonId() const { return anonId; }
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     virtual void dump(TInfoSink& infoSink, bool complete = false) const override;
 #endif
 
@@ -551,7 +551,7 @@ public:
 
     void relateToOperator(const char* name, TOperator op);
     void setFunctionExtensions(const char* name, int num, const char* const extensions[]);
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     void dump(TInfoSink& infoSink, bool complete = false) const;
 #endif
     TSymbolTableLevel* clone() const;
@@ -613,24 +613,20 @@ public:
     //
 protected:
     static const int globalLevel = 3;
-    static bool isSharedLevel(int level)  { return level <= 1; }            // exclude all per-compile levels
-    static bool isBuiltInLevel(int level) { return level <= 2; }            // exclude user globals
-    static bool isGlobalLevel(int level)  { return level <= globalLevel; }  // include user globals
+    bool isSharedLevel(int level)  { return level <= 1; }              // exclude all per-compile levels
+    bool isBuiltInLevel(int level) { return level <= 2; }              // exclude user globals
+    bool isGlobalLevel(int level)  { return level <= globalLevel; }    // include user globals
 public:
     bool isEmpty() { return table.size() == 0; }
     bool atBuiltInLevel() { return isBuiltInLevel(currentLevel()); }
     bool atGlobalLevel()  { return isGlobalLevel(currentLevel()); }
-    static bool isBuiltInSymbol(int uniqueId) {
-        int level = uniqueId >> LevelFlagBitOffset;
-        return isBuiltInLevel(level);
-    }
+
     void setNoBuiltInRedeclarations() { noBuiltInRedeclarations = true; }
     void setSeparateNameSpaces() { separateNameSpaces = true; }
 
     void push()
     {
         table.push_back(new TSymbolTableLevel);
-        updateUniqueIdLevelFlag();
     }
 
     // Make a new symbol-table level to represent the scope introduced by a structure
@@ -643,7 +639,6 @@ public:
     {
         assert(thisSymbol.getName().size() == 0);
         table.push_back(new TSymbolTableLevel);
-        updateUniqueIdLevelFlag();
         table.back()->setThisLevel();
         insert(thisSymbol);
     }
@@ -653,7 +648,6 @@ public:
         table[currentLevel()]->getPreviousDefaultPrecisions(p);
         delete table.back();
         table.pop_back();
-        updateUniqueIdLevelFlag();
     }
 
     //
@@ -860,7 +854,7 @@ public:
     }
 
     int getMaxSymbolId() { return uniqueId; }
-#if !defined(GLSLANG_WEB) && !defined(GLSLANG_ANGLE)
+#ifndef GLSLANG_WEB
     void dump(TInfoSink& infoSink, bool complete = false) const;
 #endif
     void copyTable(const TSymbolTable& copyOf);
@@ -873,20 +867,12 @@ public:
             table[level]->readOnly();
     }
 
-    // Add current level in the high-bits of unique id
-    void updateUniqueIdLevelFlag() {
-        // clamp level to avoid overflow
-        uint32_t level = currentLevel() > 7 ? 7 : currentLevel();
-        uniqueId &= ((1 << LevelFlagBitOffset) - 1);
-        uniqueId |= (level << LevelFlagBitOffset);
-    }
-
 protected:
     TSymbolTable(TSymbolTable&);
     TSymbolTable& operator=(TSymbolTableLevel&);
 
     int currentLevel() const { return static_cast<int>(table.size()) - 1; }
-    static const uint32_t LevelFlagBitOffset = 28;
+
     std::vector<TSymbolTableLevel*> table;
     int uniqueId;     // for unique identification in code generation
     bool noBuiltInRedeclarations;
