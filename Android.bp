@@ -69,6 +69,7 @@ cc_defaults {
     name: "deqp_glslang_defaults",
     defaults: ["deqp_and_deps_defaults"],
     cppflags: [
+        "-Wno-enum-enum-conversion",
         "-Wno-implicit-fallthrough",
         "-Wno-missing-field-initializers",
         "-Wno-unused-variable",
