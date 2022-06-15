@@ -47,16 +47,13 @@ if(BUILD_TESTING)
             # Test related source files
             ${CMAKE_CURRENT_SOURCE_DIR}/AST.FromFile.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/BuiltInResource.FromFile.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/Common.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Config.FromFile.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/HexFloat.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Hlsl.FromFile.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Link.FromFile.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Link.FromFile.Vk.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/Pp.FromFile.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/Spv.FromFile.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/VkRelaxed.FromFile.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/GlslMapIO.FromFile.cpp)
+            ${CMAKE_CURRENT_SOURCE_DIR}/Spv.FromFile.cpp)
 
         if(ENABLE_SPVREMAPPER)
             set(TEST_SOURCES ${TEST_SOURCES}
@@ -72,7 +69,7 @@ if(BUILD_TESTING)
             install(TARGETS glslangtests EXPORT glslangtestsTargets
                     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 			install(EXPORT glslangtestsTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
-        endif()
+        endif(ENABLE_GLSLANG_INSTALL)
 
         set(GLSLANG_TEST_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../Test")
         # Supply a default test root directory, so that manual testing
@@ -90,7 +87,7 @@ if(BUILD_TESTING)
             target_include_directories(glslangtests
                 PRIVATE ${spirv-tools_SOURCE_DIR}/include
             )
-        endif()
+        endif(ENABLE_OPT)
 
         set(LIBRARIES
             glslang OSDependent OGLCompiler glslang
@@ -102,7 +99,7 @@ if(BUILD_TESTING)
 
         if(ENABLE_HLSL)
             set(LIBRARIES ${LIBRARIES} HLSL)
-        endif()
+        endif(ENABLE_HLSL)
         target_link_libraries(glslangtests PRIVATE ${LIBRARIES} gmock)
 
         add_test(NAME glslang-gtests
