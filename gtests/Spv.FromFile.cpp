@@ -357,6 +357,12 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.discard-dce.frag",
         "spv.doWhileLoop.frag",
         "spv.earlyReturnDiscard.frag",
+        "spv.ext.ShaderTileImage.color.frag",
+        "spv.ext.ShaderTileImage.depth_stencil.frag",
+        "spv.ext.ShaderTileImage.subpassinput.frag",
+        "spv.ext.ShaderTileImage.typemismatch.frag",
+        "spv.ext.ShaderTileImage.overlap.frag",
+        "spv.ext.ShaderTileImage.wronglayout.frag",
         "spv.extPostDepthCoverage.frag",
         "spv.extPostDepthCoverage_Error.frag",
         "spv.float16convertonlyarith.comp",
@@ -384,12 +390,15 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.intOps.vert",
         "spv.intrinsicsSpirvByReference.vert",
         "spv.intrinsicsSpirvDecorate.frag",
+        "spv.intrinsicsSpirvDecorateId.comp",
+        "spv.intrinsicsSpirvDecorateString.comp",
         "spv.intrinsicsSpirvExecutionMode.frag",
         "spv.intrinsicsSpirvInstruction.vert",
         "spv.intrinsicsSpirvLiteral.vert",
         "spv.intrinsicsSpirvStorageClass.rchit",
         "spv.intrinsicsSpirvType.rgen",
         "spv.intrinsicsSpirvTypeLocalVar.vert",
+        "spv.intrinsicsSpirvTypeWithTypeSpecifier.vert",
         "spv.invariantAll.vert",
         "spv.layer.tese",
         "spv.layoutNested.vert",
@@ -441,6 +450,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.sparseTexture.frag",
         "spv.sparseTextureClamp.frag",
         "spv.structAssignment.frag",
+        "spv.structCopy.comp",
         "spv.structDeref.frag",
         "spv.structure.frag",
         "spv.switch.frag",
@@ -493,6 +503,8 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.samplerlessTextureFunctions.frag",
         "spv.smBuiltins.vert",
         "spv.smBuiltins.frag",
+        "spv.ARMCoreBuiltIns.vert",
+        "spv.ARMCoreBuiltIns.frag",
         "spv.builtin.PrimitiveShadingRateEXT.vert",
         "spv.builtin.ShadingRateEXT.frag",
         "spv.atomicAdd.bufferReference.comp",
@@ -650,6 +662,12 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.atomiAddEXT.task",
         "spv.460.subgroupEXT.task",
         "spv.460.subgroupEXT.mesh",
+
+        // SPV_NV_shader_execution_reorder
+
+        "spv.nv.hitobject-allops.rgen",
+        "spv.nv.hitobject-allops.rchit",
+        "spv.nv.hitobject-allops.rmiss",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -850,7 +868,8 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.debuginfo.glsl.comp",
         "spv.debuginfo.glsl.geom",
         "spv.debuginfo.glsl.tesc",
-        "spv.debuginfo.glsl.tese"
+        "spv.debuginfo.glsl.tese",
+        "spv.debuginfo.const_params.glsl.comp"
     })),
     FileNameAsCustomTestSuffix
 );
