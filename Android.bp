@@ -238,3 +238,27 @@ cc_library_static {
         "glslang/GenericCodeGen/Link.cpp",
     ],
 }
+
+cc_library_headers {
+    name: "deqp_glslang_ResourceLimits_headers",
+    defaults: ["deqp_and_deps_defaults"],
+    export_include_dirs: [
+        "glslang/Public/ResourceLimits.h",
+    ],
+}
+
+cc_library_static {
+    name: "deqp_glslang_ResourceLimits",
+    defaults: [
+        "deqp_glslang_defaults",
+    ],
+    export_include_dirs: [
+        "glslang/ResourceLimits",
+    ],
+    srcs: [
+        "glslang/ResourceLimits/ResourceLimits.cpp",
+    ],
+    header_libs: [
+        "deqp_glslang_ResourceLimits_headers",
+    ],
+}
