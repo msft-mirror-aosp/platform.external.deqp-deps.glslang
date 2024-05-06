@@ -255,7 +255,7 @@ TEST_P(CompileVulkanToNonSemanticShaderDebugInfoTest, FromFile)
 {
     loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
                             Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
-                            Target::Spv, true, "", "/baseResults/", false, false, true);
+                            Target::Spv, true, "", "/baseResults/", false, true, true);
 }
 
 // clang-format off
@@ -384,6 +384,9 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.discard-dce.frag",
         "spv.doWhileLoop.frag",
         "spv.earlyReturnDiscard.frag",
+        "spv.expect_assume.assumeEXT.comp",
+        "spv.expect_assume.expectEXT.comp",
+        "spv.expect_assume.expectEXT.exttypes.comp",
         "spv.ext.ShaderTileImage.color.frag",
         "spv.ext.ShaderTileImage.depth_stencil.frag",
         "spv.ext.ShaderTileImage.subpassinput.frag",
@@ -450,6 +453,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.nonuniform4.frag",
         "spv.nonuniform5.frag",
         "spv.noWorkgroup.comp",
+        "spv.nvAtomicFp16Vec.frag",
         "spv.nullInit.comp",
         "spv.offsets.frag",
         "spv.Operations.frag",
@@ -759,7 +763,7 @@ INSTANTIATE_TEST_SUITE_P(
         { "spv.register.autoassign.rangetest.frag", "main",
                 glslang::TQualifier::layoutBindingEnd-2,
                 glslang::TQualifier::layoutBindingEnd+5,
-                20, 30, true, false },
+                0, 20, 30, true, false },
     }),
     FileNameAsCustomTestSuffixIoMap
 );
@@ -942,6 +946,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.debuginfo.bufferref.glsl.frag",
         "spv.debuginfo.const_params.glsl.comp",
         "spv.debuginfo.scalar_types.glsl.frag",
+        "spv.debuginfo.rt_types.glsl.rgen",
     })),
     FileNameAsCustomTestSuffix
 );
