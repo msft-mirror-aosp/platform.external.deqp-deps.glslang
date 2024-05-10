@@ -80,6 +80,7 @@ using CompileVulkanToSpirvTestAMD = GlslangTest<::testing::TestWithParam<std::st
 using CompileVulkanToSpirvTestNV = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileVulkanToSpirv14TestNV = GlslangTest<::testing::TestWithParam<std::string>>;
 using CompileUpgradeTextureToSampledTextureAndDropSamplersTest = GlslangTest<::testing::TestWithParam<std::string>>;
+using CompileVulkanToNonSemanticShaderDebugInfoTest = GlslangTest<::testing::TestWithParam<std::string>>;
 
 // Compiling GLSL to SPIR-V under Vulkan semantics. Expected to successfully
 // generate SPIR-V.
@@ -229,6 +230,13 @@ TEST_P(CompileUpgradeTextureToSampledTextureAndDropSamplersTest, FromFile)
                                                                      Target::Spv);
 }
 
+TEST_P(CompileVulkanToNonSemanticShaderDebugInfoTest, FromFile)
+{
+    loadFileCompileAndCheck(GlobalTestSettings.testRoot, GetParam(),
+                            Source::GLSL, Semantics::Vulkan, glslang::EShTargetVulkan_1_0, glslang::EShTargetSpv_1_0,
+                            Target::Spv, true, "", "/baseResults/", false, false, true);
+}
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(
     Glsl, CompileVulkanToSpirvTest,
@@ -258,6 +266,7 @@ INSTANTIATE_TEST_SUITE_P(
         "rayQuery-initialization.Error.comp",
         "rayQuery-global.rgen",
         "rayQuery-types.comp",
+        "rayQuery-OpConvertUToAccelerationStructureKHR.comp",
         "spv.set.vert",
         "spv.double.comp",
         "spv.100ops.frag",
@@ -348,6 +357,12 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.discard-dce.frag",
         "spv.doWhileLoop.frag",
         "spv.earlyReturnDiscard.frag",
+        "spv.ext.ShaderTileImage.color.frag",
+        "spv.ext.ShaderTileImage.depth_stencil.frag",
+        "spv.ext.ShaderTileImage.subpassinput.frag",
+        "spv.ext.ShaderTileImage.typemismatch.frag",
+        "spv.ext.ShaderTileImage.overlap.frag",
+        "spv.ext.ShaderTileImage.wronglayout.frag",
         "spv.extPostDepthCoverage.frag",
         "spv.extPostDepthCoverage_Error.frag",
         "spv.float16convertonlyarith.comp",
@@ -375,12 +390,15 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.intOps.vert",
         "spv.intrinsicsSpirvByReference.vert",
         "spv.intrinsicsSpirvDecorate.frag",
+        "spv.intrinsicsSpirvDecorateId.comp",
+        "spv.intrinsicsSpirvDecorateString.comp",
         "spv.intrinsicsSpirvExecutionMode.frag",
         "spv.intrinsicsSpirvInstruction.vert",
         "spv.intrinsicsSpirvLiteral.vert",
         "spv.intrinsicsSpirvStorageClass.rchit",
         "spv.intrinsicsSpirvType.rgen",
         "spv.intrinsicsSpirvTypeLocalVar.vert",
+        "spv.intrinsicsSpirvTypeWithTypeSpecifier.vert",
         "spv.invariantAll.vert",
         "spv.layer.tese",
         "spv.layoutNested.vert",
@@ -432,6 +450,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.sparseTexture.frag",
         "spv.sparseTextureClamp.frag",
         "spv.structAssignment.frag",
+        "spv.structCopy.comp",
         "spv.structDeref.frag",
         "spv.structure.frag",
         "spv.switch.frag",
@@ -444,6 +463,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.textureBuffer.vert",
         "spv.image.frag",
         "spv.imageAtomic64.frag",
+        "spv.imageAtomic64.comp",
         "spv.types.frag",
         "spv.uint.frag",
         "spv.uniformArray.frag",
@@ -470,6 +490,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.storageBuffer.vert",
         "spv.terminate.frag",
         "spv.subgroupUniformControlFlow.vert",
+        "spv.subgroupSizeARB.frag",
         "spv.precise.tese",
         "spv.precise.tesc",
         "spv.viewportindex.tese",
@@ -482,9 +503,13 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.samplerlessTextureFunctions.frag",
         "spv.smBuiltins.vert",
         "spv.smBuiltins.frag",
+        "spv.ARMCoreBuiltIns.vert",
+        "spv.ARMCoreBuiltIns.frag",
         "spv.builtin.PrimitiveShadingRateEXT.vert",
         "spv.builtin.ShadingRateEXT.frag",
-        "spv.atomicAdd.bufferReference.comp"
+        "spv.atomicAdd.bufferReference.comp",
+        "spv.fragmentShaderBarycentric3.frag",
+        "spv.fragmentShaderBarycentric4.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -528,6 +553,7 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.vulkan110.int16.frag",
         "spv.int32.frag",
         "spv.explicittypes.frag",
+        "spv.float16NoRelaxed.vert",
         "spv.float32.frag",
         "spv.float64.frag",
         "spv.memoryScopeSemantics.comp",
@@ -625,6 +651,23 @@ INSTANTIATE_TEST_SUITE_P(
         "spv.WorkgroupMemoryExplicitLayout.std140.comp",
         "spv.WorkgroupMemoryExplicitLayout.std430.comp",
         "spv.WorkgroupMemoryExplicitLayout.scalar.comp",
+
+        // SPV_EXT_mesh_shader
+        "spv.ext.meshShaderBuiltins.mesh",
+        "spv.ext.meshShaderRedeclBuiltins.mesh",
+        "spv.ext.meshShaderTaskMem.mesh",
+        "spv.ext.meshShaderUserDefined.mesh",
+        "spv.ext.meshTaskShader.task",
+        "spv.atomiAddEXT.error.mesh",
+        "spv.atomiAddEXT.task",
+        "spv.460.subgroupEXT.task",
+        "spv.460.subgroupEXT.mesh",
+
+        // SPV_NV_shader_execution_reorder
+
+        "spv.nv.hitobject-allops.rgen",
+        "spv.nv.hitobject-allops.rchit",
+        "spv.nv.hitobject-allops.rmiss",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -635,7 +678,10 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::ValuesIn(std::vector<std::string>({
         "spv.1.6.conditionalDiscard.frag",
         "spv.1.6.helperInvocation.frag",
+        "spv.1.6.helperInvocation.memmodel.frag",
         "spv.1.6.specConstant.comp",
+        "spv.1.6.samplerBuffer.frag",
+        "spv.1.6.separate.frag",
     })),
     FileNameAsCustomTestSuffix
 );
@@ -805,10 +851,25 @@ INSTANTIATE_TEST_SUITE_P(
 })),
 FileNameAsCustomTestSuffix
 );
+
 INSTANTIATE_TEST_SUITE_P(
     Glsl, CompileUpgradeTextureToSampledTextureAndDropSamplersTest,
     ::testing::ValuesIn(std::vector<std::string>({
       "spv.texture.sampler.transform.frag",
+    })),
+    FileNameAsCustomTestSuffix
+);
+
+INSTANTIATE_TEST_SUITE_P(
+    Glsl, CompileVulkanToNonSemanticShaderDebugInfoTest,
+    ::testing::ValuesIn(std::vector<std::string>({
+        "spv.debuginfo.glsl.vert",
+        "spv.debuginfo.glsl.frag",
+        "spv.debuginfo.glsl.comp",
+        "spv.debuginfo.glsl.geom",
+        "spv.debuginfo.glsl.tesc",
+        "spv.debuginfo.glsl.tese",
+        "spv.debuginfo.const_params.glsl.comp"
     })),
     FileNameAsCustomTestSuffix
 );
