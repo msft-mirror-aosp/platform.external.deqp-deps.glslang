@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2014-2015 LunarG, Inc.
+// Copyright (C) 2022-2024 Arm Limited.
 // Modifications Copyright (C) 2020 Advanced Micro Devices, Inc. All rights reserved.
 //
 // All rights reserved.
@@ -55,6 +56,7 @@ namespace spv {
         #include "GLSL.ext.AMD.h"
         #include "GLSL.ext.NV.h"
         #include "GLSL.ext.ARM.h"
+        #include "GLSL.ext.QCOM.h"
     }
 }
 
@@ -197,6 +199,7 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeStencilRefGreaterBackAMD:      return "StencilRefGreaterBackAMD";
     case ExecutionModeStencilRefReplacingEXT:        return "StencilRefReplacingEXT";
     case ExecutionModeSubgroupUniformControlFlowKHR: return "SubgroupUniformControlFlow";
+    case ExecutionModeMaximallyReconvergesKHR:       return "MaximallyReconverges";
 
     case ExecutionModeOutputLinesNV:                 return "OutputLinesNV";
     case ExecutionModeOutputPrimitivesNV:            return "OutputPrimitivesNV";
@@ -215,6 +218,9 @@ const char* ExecutionModeString(int mode)
     case ExecutionModeMaxWorkDimINTEL:          return "MaxWorkDimINTEL";
     case ExecutionModeNoGlobalOffsetINTEL:      return "NoGlobalOffsetINTEL";
     case ExecutionModeNumSIMDWorkitemsINTEL:    return "NumSIMDWorkitemsINTEL";
+
+    case ExecutionModeRequireFullQuadsKHR:      return "RequireFullQuadsKHR";
+    case ExecutionModeQuadDerivativesKHR:       return "QuadDerivativesKHR";
 
     case ExecutionModeNonCoherentColorAttachmentReadEXT:        return "NonCoherentColorAttachmentReadEXT";
     case ExecutionModeNonCoherentDepthAttachmentReadEXT:        return "NonCoherentDepthAttachmentReadEXT";
@@ -311,7 +317,9 @@ const char* DecorationString(int decoration)
     case DecorationCeiling:
     default:  return "Bad";
 
-    case DecorationExplicitInterpAMD: return "ExplicitInterpAMD";
+    case DecorationWeightTextureQCOM:           return "DecorationWeightTextureQCOM";
+    case DecorationBlockMatchTextureQCOM:       return "DecorationBlockMatchTextureQCOM";
+    case DecorationExplicitInterpAMD:           return "ExplicitInterpAMD";
     case DecorationOverrideCoverageNV:          return "OverrideCoverageNV";
     case DecorationPassthroughNV:               return "PassthroughNV";
     case DecorationViewportRelativeNV:          return "ViewportRelativeNV";
@@ -411,6 +419,10 @@ const char* BuiltInString(int builtIn)
     case BuiltInRayTmaxKHR:                  return "RayTmaxKHR";
     case BuiltInCullMaskKHR:                 return "CullMaskKHR";
     case BuiltInHitTriangleVertexPositionsKHR: return "HitTriangleVertexPositionsKHR";
+    case BuiltInHitMicroTriangleVertexPositionsNV: return "HitMicroTriangleVertexPositionsNV";
+    case BuiltInHitMicroTriangleVertexBarycentricsNV: return "HitMicroTriangleVertexBarycentricsNV";
+    case BuiltInHitKindFrontFacingMicroTriangleNV: return "HitKindFrontFacingMicroTriangleNV";
+    case BuiltInHitKindBackFacingMicroTriangleNV: return "HitKindBackFacingMicroTriangleNV";
     case BuiltInInstanceCustomIndexKHR:      return "InstanceCustomIndexKHR";
     case BuiltInRayGeometryIndexKHR:         return "RayGeometryIndexKHR";
     case BuiltInObjectToWorldKHR:            return "ObjectToWorldKHR";
@@ -790,6 +802,21 @@ const char* MemoryAccessString(int mem)
     }
 }
 
+const int CooperativeMatrixOperandsCeiling = 6;
+
+const char* CooperativeMatrixOperandsString(int op)
+{
+    switch (op) {
+    case CooperativeMatrixOperandsMatrixASignedComponentsKHRShift:  return "ASignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixBSignedComponentsKHRShift:  return "BSignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixCSignedComponentsKHRShift:  return "CSignedComponentsKHR";
+    case CooperativeMatrixOperandsMatrixResultSignedComponentsKHRShift:  return "ResultSignedComponentsKHR";
+    case CooperativeMatrixOperandsSaturatingAccumulationKHRShift:   return "SaturatingAccumulationKHR";
+
+    default: return "Bad";
+    }
+}
+
 const char* ScopeString(int mem)
 {
     switch (mem) {
@@ -916,6 +943,7 @@ const char* CapabilityString(int info)
     case CapabilitySubgroupBallotKHR: return "SubgroupBallotKHR";
     case CapabilityDrawParameters:    return "DrawParameters";
     case CapabilitySubgroupVoteKHR:   return "SubgroupVoteKHR";
+    case CapabilityGroupNonUniformRotateKHR: return "CapabilityGroupNonUniformRotateKHR";
 
     case CapabilityStorageUniformBufferBlock16: return "StorageUniformBufferBlock16";
     case CapabilityStorageUniform16:            return "StorageUniform16";
@@ -959,6 +987,8 @@ const char* CapabilityString(int info)
     case CapabilityRayTracingProvisionalKHR:        return "RayTracingProvisionalKHR";
     case CapabilityRayTraversalPrimitiveCullingKHR: return "RayTraversalPrimitiveCullingKHR";
     case CapabilityRayTracingPositionFetchKHR:      return "RayTracingPositionFetchKHR";
+    case CapabilityDisplacementMicromapNV:           return "DisplacementMicromapNV";
+    case CapabilityRayTracingDisplacementMicromapNV: return "CapabilityRayTracingDisplacementMicromapNV";
     case CapabilityRayQueryPositionFetchKHR:        return "RayQueryPositionFetchKHR";
     case CapabilityComputeDerivativeGroupQuadsNV:   return "ComputeDerivativeGroupQuadsNV";
     case CapabilityComputeDerivativeGroupLinearNV:  return "ComputeDerivativeGroupLinearNV";
@@ -993,6 +1023,7 @@ const char* CapabilityString(int info)
     case CapabilityVariablePointers:                    return "VariablePointers";
 
     case CapabilityCooperativeMatrixNV:     return "CooperativeMatrixNV";
+    case CapabilityCooperativeMatrixKHR:    return "CooperativeMatrixKHR";
     case CapabilityShaderSMBuiltinsNV:      return "ShaderSMBuiltinsNV";
 
     case CapabilityFragmentShaderSampleInterlockEXT:        return "CapabilityFragmentShaderSampleInterlockEXT";
@@ -1006,10 +1037,14 @@ const char* CapabilityString(int info)
     case CapabilityFragmentShadingRateKHR:                  return "FragmentShadingRateKHR";
 
     case CapabilityDemoteToHelperInvocationEXT:             return "DemoteToHelperInvocationEXT";
+    case CapabilityAtomicFloat16VectorNV:                   return "AtomicFloat16VectorNV";
     case CapabilityShaderClockKHR:                          return "ShaderClockKHR";
+    case CapabilityQuadControlKHR:                          return "QuadControlKHR";
     case CapabilityInt64ImageEXT:                           return "Int64ImageEXT";
 
     case CapabilityIntegerFunctions2INTEL:              return "CapabilityIntegerFunctions2INTEL";
+
+    case CapabilityExpectAssumeKHR:                         return "ExpectAssumeKHR";
 
     case CapabilityAtomicFloat16AddEXT:                     return "AtomicFloat16AddEXT";
     case CapabilityAtomicFloat32AddEXT:                     return "AtomicFloat32AddEXT";
@@ -1024,6 +1059,11 @@ const char* CapabilityString(int info)
     case CapabilityCoreBuiltinsARM:                             return "CoreBuiltinsARM";
 
     case CapabilityShaderInvocationReorderNV:                return "ShaderInvocationReorderNV";
+
+    case CapabilityTextureSampleWeightedQCOM:           return "TextureSampleWeightedQCOM";
+    case CapabilityTextureBoxFilterQCOM:                return "TextureBoxFilterQCOM";
+    case CapabilityTextureBlockMatchQCOM:               return "TextureBlockMatchQCOM";
+
     default: return "Bad";
     }
 }
@@ -1402,9 +1442,15 @@ const char* OpcodeString(int op)
     case 4430: return "OpSubgroupAllEqualKHR";
     case 4432: return "OpSubgroupReadInvocationKHR";
 
+    case OpGroupNonUniformQuadAllKHR: return "OpGroupNonUniformQuadAllKHR";
+    case OpGroupNonUniformQuadAnyKHR: return "OpGroupNonUniformQuadAnyKHR";
+
     case OpAtomicFAddEXT: return "OpAtomicFAddEXT";
     case OpAtomicFMinEXT: return "OpAtomicFMinEXT";
     case OpAtomicFMaxEXT: return "OpAtomicFMaxEXT";
+
+    case OpAssumeTrueKHR: return "OpAssumeTrueKHR";
+    case OpExpectKHR: return "OpExpectKHR";
 
     case 5000: return "OpGroupIAddNonUniformAMD";
     case 5001: return "OpGroupFAddNonUniformAMD";
@@ -1442,6 +1488,8 @@ const char* OpcodeString(int op)
     case OpEmitMeshTasksEXT:                 return "OpEmitMeshTasksEXT";
     case OpSetMeshOutputsEXT:                return "OpSetMeshOutputsEXT";
 
+    case OpGroupNonUniformRotateKHR:         return "OpGroupNonUniformRotateKHR";
+
     case OpTypeRayQueryKHR:                                                   return "OpTypeRayQueryKHR";
     case OpRayQueryInitializeKHR:                                             return "OpRayQueryInitializeKHR";
     case OpRayQueryTerminateKHR:                                              return "OpRayQueryTerminateKHR";
@@ -1473,6 +1521,11 @@ const char* OpcodeString(int op)
     case OpCooperativeMatrixStoreNV:        return "OpCooperativeMatrixStoreNV";
     case OpCooperativeMatrixMulAddNV:       return "OpCooperativeMatrixMulAddNV";
     case OpCooperativeMatrixLengthNV:       return "OpCooperativeMatrixLengthNV";
+    case OpTypeCooperativeMatrixKHR:        return "OpTypeCooperativeMatrixKHR";
+    case OpCooperativeMatrixLoadKHR:        return "OpCooperativeMatrixLoadKHR";
+    case OpCooperativeMatrixStoreKHR:       return "OpCooperativeMatrixStoreKHR";
+    case OpCooperativeMatrixMulAddKHR:      return "OpCooperativeMatrixMulAddKHR";
+    case OpCooperativeMatrixLengthKHR:      return "OpCooperativeMatrixLengthKHR";
     case OpDemoteToHelperInvocationEXT:     return "OpDemoteToHelperInvocationEXT";
     case OpIsHelperInvocationEXT:           return "OpIsHelperInvocationEXT";
 
@@ -1513,9 +1566,17 @@ const char* OpcodeString(int op)
     case OpHitObjectGetShaderBindingTableRecordIndexNV: return "OpHitObjectGetShaderBindingTableRecordIndexNV";
     case OpHitObjectGetShaderRecordBufferHandleNV:   return "OpHitObjectGetShaderRecordBufferHandleNV";
 
+    case OpFetchMicroTriangleVertexBarycentricNV:       return "OpFetchMicroTriangleVertexBarycentricNV";
+    case OpFetchMicroTriangleVertexPositionNV:    return "OpFetchMicroTriangleVertexPositionNV";
+
     case OpColorAttachmentReadEXT:          return "OpColorAttachmentReadEXT";
     case OpDepthAttachmentReadEXT:          return "OpDepthAttachmentReadEXT";
     case OpStencilAttachmentReadEXT:        return "OpStencilAttachmentReadEXT";
+
+    case OpImageSampleWeightedQCOM:         return "OpImageSampleWeightedQCOM";
+    case OpImageBoxFilterQCOM:              return "OpImageBoxFilterQCOM";
+    case OpImageBlockMatchSADQCOM:          return "OpImageBlockMatchSADQCOM";
+    case OpImageBlockMatchSSDQCOM:          return "OpImageBlockMatchSSDQCOM";
 
     default:
         return "Bad";
@@ -1536,6 +1597,7 @@ EnumParameters LoopControlParams[FunctionControlCeiling];
 EnumParameters SelectionControlParams[SelectControlCeiling];
 EnumParameters FunctionControlParams[FunctionControlCeiling];
 EnumParameters MemoryAccessParams[MemoryAccessCeiling];
+EnumParameters CooperativeMatrixOperandsParams[CooperativeMatrixOperandsCeiling];
 
 // Set up all the parameterizing descriptions of the opcodes, operands, etc.
 void Parameterize()
@@ -1630,9 +1692,11 @@ void Parameterize()
         InstructionDesc[OpModuleProcessed].setResultAndType(false, false);
         InstructionDesc[OpTypeCooperativeMatrixNV].setResultAndType(true, false);
         InstructionDesc[OpCooperativeMatrixStoreNV].setResultAndType(false, false);
+        InstructionDesc[OpTypeCooperativeMatrixKHR].setResultAndType(true, false);
+        InstructionDesc[OpCooperativeMatrixStoreKHR].setResultAndType(false, false);
         InstructionDesc[OpBeginInvocationInterlockEXT].setResultAndType(false, false);
         InstructionDesc[OpEndInvocationInterlockEXT].setResultAndType(false, false);
-
+        InstructionDesc[OpAssumeTrueKHR].setResultAndType(false, false);
         // Specific additional context-dependent operands
 
         ExecutionModeOperands[ExecutionModeInvocations].push(OperandLiteralNumber, "'Number of <<Invocation,invocations>>'");
@@ -1701,6 +1765,7 @@ void Parameterize()
         OperandClassParams[OperandKernelEnqueueFlags].set(0, KernelEnqueueFlagsString, nullptr);
         OperandClassParams[OperandKernelProfilingInfo].set(0, KernelProfilingInfoString, nullptr, true);
         OperandClassParams[OperandCapability].set(0, CapabilityString, nullptr);
+        OperandClassParams[OperandCooperativeMatrixOperands].set(CooperativeMatrixOperandsCeiling, CooperativeMatrixOperandsString, CooperativeMatrixOperandsParams, true);
         OperandClassParams[OperandOpcode].set(OpCodeMask + 1, OpcodeString, nullptr);
 
         // set name of operator, an initial set of <id> style operands, and the description
@@ -2410,6 +2475,11 @@ void Parameterize()
         InstructionDesc[OpAtomicFAddEXT].operands.push(OperandMemorySemantics, "'Semantics'");
         InstructionDesc[OpAtomicFAddEXT].operands.push(OperandId, "'Value'");
 
+        InstructionDesc[OpAssumeTrueKHR].operands.push(OperandId, "'Condition'");
+
+        InstructionDesc[OpExpectKHR].operands.push(OperandId, "'Value'");
+        InstructionDesc[OpExpectKHR].operands.push(OperandId, "'ExpectedValue'");
+
         InstructionDesc[OpAtomicISub].operands.push(OperandId, "'Pointer'");
         InstructionDesc[OpAtomicISub].operands.push(OperandScope, "'Scope'");
         InstructionDesc[OpAtomicISub].operands.push(OperandMemorySemantics, "'Semantics'");
@@ -2838,6 +2908,11 @@ void Parameterize()
         InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandScope, "'Execution'");
         InstructionDesc[OpSubgroupAllEqualKHR].operands.push(OperandId, "'Predicate'");
 
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandScope, "'Execution'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'X'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'Delta'");
+        InstructionDesc[OpGroupNonUniformRotateKHR].operands.push(OperandId, "'ClusterSize'", true);
+
         InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Value'");
         InstructionDesc[OpSubgroupReadInvocationKHR].operands.push(OperandId, "'Index'");
 
@@ -2884,6 +2959,8 @@ void Parameterize()
 
         InstructionDesc[OpGroupNonUniformPartitionNV].operands.push(OperandId, "X");
 
+        InstructionDesc[OpGroupNonUniformQuadAllKHR].operands.push(OperandId, "'Predicate'");
+        InstructionDesc[OpGroupNonUniformQuadAnyKHR].operands.push(OperandId, "'Predicate'");
         InstructionDesc[OpTypeAccelerationStructureKHR].setResultAndType(true, false);
 
         InstructionDesc[OpTraceNV].operands.push(OperandId, "'Acceleration Structure'");
@@ -3044,7 +3121,7 @@ void Parameterize()
 
         InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'RayQuery'");
         InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].operands.push(OperandId, "'Committed'");
-        InstructionDesc[OpRayQueryGetIntersectionWorldToObjectKHR].setResultAndType(true, true);
+        InstructionDesc[OpRayQueryGetIntersectionTriangleVertexPositionsKHR].setResultAndType(true, true);
 
         InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Sampled Image'");
         InstructionDesc[OpImageSampleFootprintNV].operands.push(OperandId, "'Coordinate'");
@@ -3092,6 +3169,34 @@ void Parameterize()
         InstructionDesc[OpCooperativeMatrixMulAddNV].operands.push(OperandId, "'C'");
 
         InstructionDesc[OpCooperativeMatrixLengthNV].operands.push(OperandId, "'Type'");
+
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Component Type'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Scope'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Rows'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Columns'");
+        InstructionDesc[OpTypeCooperativeMatrixKHR].operands.push(OperandId, "'Use'");
+
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Memory Layout'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "'Stride'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandLiteralNumber, "", true);
+        InstructionDesc[OpCooperativeMatrixLoadKHR].operands.push(OperandId, "", true);
+
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Pointer'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Object'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Memory Layout'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "'Stride'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandMemoryAccess, "'Memory Access'");
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandLiteralNumber, "", true);
+        InstructionDesc[OpCooperativeMatrixStoreKHR].operands.push(OperandId, "", true);
+
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'A'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'B'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandId, "'C'");
+        InstructionDesc[OpCooperativeMatrixMulAddKHR].operands.push(OperandCooperativeMatrixOperands, "'Cooperative Matrix Operands'", true);
+
+        InstructionDesc[OpCooperativeMatrixLengthKHR].operands.push(OperandId, "'Type'");
 
         InstructionDesc[OpDemoteToHelperInvocationEXT].setResultAndType(false, false);
 
@@ -3282,10 +3387,52 @@ void Parameterize()
         InstructionDesc[OpHitObjectTraceRayMotionNV].operands.push(OperandId, "'Payload'");
         InstructionDesc[OpHitObjectTraceRayMotionNV].setResultAndType(false, false);
 
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Acceleration Structure'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Instance ID'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Geometry Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Primitive Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].operands.push(OperandId, "'Barycentrics'");
+        InstructionDesc[OpFetchMicroTriangleVertexBarycentricNV].setResultAndType(true, true);
+
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Acceleration Structure'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Instance ID'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Geometry Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Primitive Index'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].operands.push(OperandId, "'Barycentrics'");
+        InstructionDesc[OpFetchMicroTriangleVertexPositionNV].setResultAndType(true, true);
+
         InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Attachment'");
         InstructionDesc[OpColorAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
         InstructionDesc[OpStencilAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
         InstructionDesc[OpDepthAttachmentReadEXT].operands.push(OperandId, "'Sample'", true);
+
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'source texture'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'texture coordinates'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandId, "'weights texture'");
+        InstructionDesc[OpImageSampleWeightedQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageSampleWeightedQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'source texture'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'texture coordinates'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandId, "'box size'");
+        InstructionDesc[OpImageBoxFilterQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBoxFilterQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchSADQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchSADQCOM].setResultAndType(true, true);
+
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'target texture'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'target coordinates'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'reference texture'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'reference coordinates'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandId, "'block size'");
+        InstructionDesc[OpImageBlockMatchSSDQCOM].operands.push(OperandImageOperands, "", true);
+        InstructionDesc[OpImageBlockMatchSSDQCOM].setResultAndType(true, true);
     });
 }
 
