@@ -5,7 +5,6 @@
 //
 // dEQP depends on:
 // - glslang
-//   - OGLCompiler
 //   - OSDependent
 //   - MachineIndependent
 //     - OGLCompiler
@@ -101,19 +100,6 @@ cc_library_static {
 }
 
 cc_library_static {
-    name: "deqp_glslang_OGLCompiler",
-    defaults: [
-        "deqp_glslang_defaults",
-    ],
-    export_include_dirs: [
-        "OGLCompilersDLL",
-    ],
-    srcs: [
-        "OGLCompilersDLL/InitializeDll.cpp",
-    ],
-}
-
-cc_library_static {
     name: "deqp_glslang_MachineIndependent",
     defaults: [
         "deqp_glslang_defaults",
@@ -163,7 +149,6 @@ cc_library_static {
         "glslang/HLSL/hlslParseables.cpp",
     ],
     static_libs: [
-        "deqp_glslang_OGLCompiler",
         "deqp_glslang_OSDependent",
         "deqp_glslang_GenericCodeGen",
     ],
@@ -181,7 +166,6 @@ cc_library_static {
         "glslang/CInterface/glslang_c_interface.cpp"
     ],
     static_libs: [
-        "deqp_glslang_OGLCompiler",
         "deqp_glslang_OSDependent",
         "deqp_glslang_MachineIndependent",
     ],
