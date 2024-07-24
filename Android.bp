@@ -5,7 +5,6 @@
 //
 // dEQP depends on:
 // - glslang
-//   - OGLCompiler
 //   - OSDependent
 //   - MachineIndependent
 //     - OGLCompiler
@@ -101,19 +100,6 @@ cc_library_static {
 }
 
 cc_library_static {
-    name: "deqp_glslang_OGLCompiler",
-    defaults: [
-        "deqp_glslang_defaults",
-    ],
-    export_include_dirs: [
-        "OGLCompilersDLL",
-    ],
-    srcs: [
-        "OGLCompilersDLL/InitializeDll.cpp",
-    ],
-}
-
-cc_library_static {
     name: "deqp_glslang_MachineIndependent",
     defaults: [
         "deqp_glslang_defaults",
@@ -163,7 +149,6 @@ cc_library_static {
         "glslang/HLSL/hlslParseables.cpp",
     ],
     static_libs: [
-        "deqp_glslang_OGLCompiler",
         "deqp_glslang_OSDependent",
         "deqp_glslang_GenericCodeGen",
     ],
@@ -181,7 +166,6 @@ cc_library_static {
         "glslang/CInterface/glslang_c_interface.cpp"
     ],
     static_libs: [
-        "deqp_glslang_OGLCompiler",
         "deqp_glslang_OSDependent",
         "deqp_glslang_MachineIndependent",
     ],
@@ -236,5 +220,29 @@ cc_library_static {
     srcs: [
         "glslang/GenericCodeGen/CodeGen.cpp",
         "glslang/GenericCodeGen/Link.cpp",
+    ],
+}
+
+cc_library_headers {
+    name: "deqp_glslang_ResourceLimits_headers",
+    defaults: ["deqp_and_deps_defaults"],
+    export_include_dirs: [
+        "glslang/Public/ResourceLimits.h",
+    ],
+}
+
+cc_library_static {
+    name: "deqp_glslang_ResourceLimits",
+    defaults: [
+        "deqp_glslang_defaults",
+    ],
+    export_include_dirs: [
+        "glslang/ResourceLimits",
+    ],
+    srcs: [
+        "glslang/ResourceLimits/ResourceLimits.cpp",
+    ],
+    header_libs: [
+        "deqp_glslang_ResourceLimits_headers",
     ],
 }
