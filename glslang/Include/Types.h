@@ -307,21 +307,6 @@ typedef TVector<TTypeLoc> TTypeList;
 
 typedef TVector<TString*> TIdentifierList;
 
-//
-// Following are a series of helper enums for managing layouts and qualifiers,
-// used for TPublicType, TType, others.
-//
-
-enum TLayoutPacking {
-    ElpNone,
-    ElpShared,      // default, but different than saying nothing
-    ElpStd140,
-    ElpStd430,
-    ElpPacked,
-    ElpScalar,
-    ElpCount        // If expanding, see bitfield width below
-};
-
 enum TLayoutMatrix {
     ElmNone,
     ElmRowMajor,
@@ -573,7 +558,8 @@ public:
     }
 
     const char*         semanticName;
-    TStorageQualifier   storage   : 6;
+    TStorageQualifier   storage   : 7;
+    static_assert(EvqLast < 64, "need to increase size of TStorageQualifier bitfields!");
     TBuiltInVariable    builtIn   : 9;
     TBuiltInVariable    declaredBuiltIn : 9;
     static_assert(EbvLast < 256, "need to increase size of TBuiltInVariable bitfields!");
@@ -1434,13 +1420,25 @@ class TTypeParameters {
 public:
     POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
 
-    TTypeParameters() : basicType(EbtVoid), arraySizes(nullptr) {}
+    TTypeParameters() : basicType(EbtVoid), arraySizes(nullptr), spirvType(nullptr) {}
 
     TBasicType basicType;
     TArraySizes *arraySizes;
+    TSpirvType *spirvType;
 
-    bool operator==(const TTypeParameters& rhs) const { return basicType == rhs.basicType && *arraySizes == *rhs.arraySizes; }
-    bool operator!=(const TTypeParameters& rhs) const { return basicType != rhs.basicType || *arraySizes != *rhs.arraySizes; }
+    bool operator==(const TTypeParameters& rhs) const
+    {
+        bool same = basicType == rhs.basicType && *arraySizes == *rhs.arraySizes;
+        if (same && basicType == EbtSpirvType) {
+            assert(spirvType && rhs.spirvType);
+            return *spirvType == *rhs.spirvType;
+        }
+        return same;
+    }
+    bool operator!=(const TTypeParameters& rhs) const
+    {
+        return !(*this == rhs);
+    }
 };
 
 //
@@ -1472,6 +1470,9 @@ public:
     bool isCoopmat() const { return coopmatNV || coopmatKHR; }
     bool isCoopmatNV() const { return coopmatNV; }
     bool isCoopmatKHR() const { return coopmatKHR; }
+
+    bool isTensorLayoutNV() const { return basicType == EbtTensorLayoutNV; }
+    bool isTensorViewNV() const { return basicType == EbtTensorViewNV; }
 
     void initType(const TSourceLoc& l)
     {
@@ -1617,13 +1618,16 @@ public:
                                 }
                                 if (p.isCoopmatKHR() && p.typeParameters && p.typeParameters->arraySizes->getNumDims() > 0) {
                                     basicType = p.typeParameters->basicType;
+                                    if (isSpirvType()) {
+                                        assert(p.typeParameters->spirvType);
+                                        spirvType = p.typeParameters->spirvType;
+                                    }
 
                                     if (p.typeParameters->arraySizes->getNumDims() == 4) {
                                         const int dimSize = p.typeParameters->arraySizes->getDimSize(3);
                                         assert(dimSize >= 0);
                                         coopmatKHRuse = static_cast<uint32_t>(dimSize) & 0b111;
                                         coopmatKHRUseValid = true;
-                                        p.typeParameters->arraySizes->removeLastSize();
                                     }
                                 }
                             }
@@ -1879,6 +1883,9 @@ public:
     bool isSpirvType() const { return getBasicType() == EbtSpirvType; }
     int getCoopMatKHRuse() const { return static_cast<int>(coopmatKHRuse); }
 
+    bool isTensorLayoutNV() const { return getBasicType() == EbtTensorLayoutNV; }
+    bool isTensorViewNV() const { return getBasicType() == EbtTensorViewNV; }
+
     // return true if this type contains any subtype which satisfies the given predicate.
     template <typename P>
     bool contains(P predicate) const
@@ -2104,6 +2111,8 @@ public:
         case EbtString:            return "string";
         case EbtSpirvType:         return "spirv_type";
         case EbtCoopmat:           return "coopmat";
+        case EbtTensorLayoutNV:    return "tensorLayoutNV";
+        case EbtTensorViewNV:      return "tensorViewNV";
         default:                   return "unknown type";
         }
     }
@@ -2414,16 +2423,20 @@ public:
                 appendStr(" ");
                 appendStr("coopmat");
               }
+              if (isTensorLayoutNV()) {
+                appendStr(" ");
+                appendStr("tensorLayoutNV");
+              }
+              if (isTensorViewNV()) {
+                appendStr(" ");
+                appendStr("tensorViewNV");
+              }
 
               appendStr("<");
               for (int i = 0; i < (int)typeParameters->arraySizes->getNumDims(); ++i) {
                 appendInt(typeParameters->arraySizes->getDimSize(i));
                 if (i != (int)typeParameters->arraySizes->getNumDims() - 1)
                   appendStr(", ");
-              }
-              if (coopmatKHRUseValid) {
-                  appendStr(", ");
-                  appendInt(coopmatKHRuse);
               }
               appendStr(">");
             }
@@ -2718,7 +2731,8 @@ public:
         if (isCoopMatKHR() && right.isCoopMatKHR()) {
             return ((getBasicType() == right.getBasicType()) || (getBasicType() == EbtCoopmat) ||
                     (right.getBasicType() == EbtCoopmat)) &&
-                   typeParameters == nullptr && right.typeParameters != nullptr;
+                   ((typeParameters == nullptr && right.typeParameters != nullptr) ||
+                    (typeParameters != nullptr && right.typeParameters == nullptr));
         }
         return false;
     }
@@ -2749,24 +2763,44 @@ public:
         return rv;
     }
 
+    bool tensorParameterOK(const TType& right) const
+    {
+        if (isTensorLayoutNV()) {
+            return right.isTensorLayoutNV() && right.typeParameters == nullptr && typeParameters != nullptr;
+        }
+        if (isTensorViewNV()) {
+            return right.isTensorViewNV() && right.typeParameters == nullptr && typeParameters != nullptr;
+        }
+        return false;
+    }
+
     bool sameCoopMatUse(const TType &right) const {
         return coopmatKHRuse == right.coopmatKHRuse;
     }
 
-    bool sameCoopMatShapeAndUse(const TType &right) const
+    bool sameCoopMatShape(const TType &right) const
     {
         if (!isCoopMat() || !right.isCoopMat() || isCoopMatKHR() != right.isCoopMatKHR())
+            return false;
+
+        // Skip bit width type parameter (first array size) for coopmatNV
+        int firstArrayDimToCompare = isCoopMatNV() ? 1 : 0;
+        int lastArrayDimToCompare = typeParameters->arraySizes->getNumDims() - (isCoopMatKHR() ? 1 : 0);
+        for (int i = firstArrayDimToCompare; i < lastArrayDimToCompare; ++i) {
+            if (typeParameters->arraySizes->getDimSize(i) != right.typeParameters->arraySizes->getDimSize(i))
+                return false;
+        }
+        return true;
+    }
+
+    bool sameCoopMatShapeAndUse(const TType &right) const
+    {
+        if (!sameCoopMatShape(right))
             return false;
 
         if (coopmatKHRuse != right.coopmatKHRuse)
             return false;
 
-        // Skip bit width type parameter (first array size) for coopmatNV
-        int firstArrayDimToCompare = isCoopMatNV() ? 1 : 0;
-        for (int i = firstArrayDimToCompare; i < typeParameters->arraySizes->getNumDims(); ++i) {
-            if (typeParameters->arraySizes->getDimSize(i) != right.typeParameters->arraySizes->getDimSize(i))
-                return false;
-        }
         return true;
     }
 
@@ -2824,6 +2858,9 @@ protected:
             typeParameters = new TTypeParameters;
             typeParameters->arraySizes = new TArraySizes;
             *typeParameters->arraySizes = *copyOf.typeParameters->arraySizes;
+            if (copyOf.typeParameters->spirvType) {
+                *typeParameters->spirvType = *copyOf.typeParameters->spirvType;
+            }
             typeParameters->basicType = copyOf.basicType;
         }
 
