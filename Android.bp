@@ -275,6 +275,7 @@ cc_binary_host {
 
     cppflags: [
         "-DENABLE_OPT=0",
+        "-DENABLE_SPIRV=1",
     ],
 
     generated_headers: [
@@ -283,6 +284,7 @@ cc_binary_host {
     ],
 
     static_libs: [
+        "deqp_glslang_SPIRV",
         "deqp_glslang_glslang",
         "deqp_glslang_ResourceLimits",
         "deqp_glslang_MachineIndependent",
