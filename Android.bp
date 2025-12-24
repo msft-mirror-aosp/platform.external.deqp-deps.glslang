@@ -207,7 +207,6 @@ cc_library_static {
         "SPIRV",
     ],
     srcs: [
-        "SPIRV/SPVRemapper.cpp",
         "SPIRV/doc.cpp",
     ],
 }
